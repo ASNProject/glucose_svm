@@ -2,7 +2,7 @@
 
 ### Clone Project
 ```commandline
-git clone
+git clone https://github.com/ASNProject/glucose_svm.git
 ```
 ### Run Project
 
