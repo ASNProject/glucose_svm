@@ -2,13 +2,15 @@ import numpy as np
 import joblib
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
+import pandas as pd
+
+# MASUKKAN DATA BARU
+new_adc = 300
+new_glucose = 150
 
 # ===============
 # Test SVR
 # ===============
-new_adc = 300
-new_glucose = 150
-
 # Load model
 svr_model = joblib.load('svr_model.pkl')
 scaler_factor = joblib.load('scaler_factor.pkl')
@@ -27,15 +29,12 @@ print(f"Hasil Perkalian  : {result_pred:.2f}\n")
 # ========================
 # Test SVM Classification
 # ========================
-age = 42
-glucose = 160
-bmi = 29.0
 
 # Load model
 svm_diabetes = joblib.load('svm_diabetes_model.pkl')
 scaler_diabetes = joblib.load('scaler_diabetes.pkl')
 
-x_new_diab = np.array([[age, glucose, bmi]])
+x_new_diab = np.array([[result_pred]])
 x_diab_scaled = scaler_diabetes.transform(x_new_diab)
 
 # Prediction and Probability
@@ -44,52 +43,40 @@ probability = svm_diabetes.predict_proba(x_diab_scaled)[0][1]
 
 result = "Diabetes" if prediction == 1 else "Tidak Diabetes"
 print("=== Prediksi Diabetes ===")
-print(f"Input: Umur={age}, Glukosa={glucose}, BMI={bmi}")
+print(f"Input: Glukosa = {result_pred:.2f}")
 print(f"Hasil Prediksi : {result}")
 print(f"Probabilitas   : {probability:.2%}")
 
 # ========================
-# Visualisasi SVM Diabetes (Glukosa & BMI)
+# Visualisasi SVM Diabetes (Glukosa)
 # ========================
-# Data dummy untuk visualisasi decision boundary
-X_visual = np.array([
-    [100, 22.0],
-    [150, 28.5],
-    [120, 26.1],
-    [180, 31.2],
-    [90, 20.5],
-    [200, 35.3],
-    [135, 24.0],
-    [170, 30.1],
-    [110, 23.3],
-    [160, 29.7]
-])
-y_visual = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
+# Data asli
+df_diabetes = pd.read_excel('data.xlsx', sheet_name='Diabetes')
+X_visual = df_diabetes[['glucose']].values
+y_visual = df_diabetes['label'].values
 
-# Gunakan scaler yang sama (fit sebelumnya)
-X_visual_scaled = scaler_diabetes.transform(np.hstack((np.full((10,1), age), X_visual)))[:, 1:]  # hanya ambil Glukosa & BMI
+# Load scaler dan model kamu
+scaler_diabetes = joblib.load('scaler_diabetes.pkl')
+svm_diabetes = joblib.load('svm_diabetes_model.pkl')
 
-# Buat meshgrid untuk decision boundary
-h = .02
-x_min, x_max = X_visual_scaled[:, 0].min() - 1, X_visual_scaled[:, 0].max() + 1
-y_min, y_max = X_visual_scaled[:, 1].min() - 1, X_visual_scaled[:, 1].max() + 1
-xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                     np.arange(y_min, y_max, h))
+# Scaling fitur glucose saja
+X_visual_scaled = scaler_diabetes.transform(X_visual)
 
-# Ambil classifier dengan fitur Glukosa & BMI
-clf_visual = SVC(kernel='rbf', probability=True)
-clf_visual.fit(X_visual_scaled, y_visual)
+# Buat range untuk plot decision function
+x_min, x_max = X_visual_scaled.min() - 1, X_visual_scaled.max() + 1
+x_plot = np.linspace(x_min, x_max, 500).reshape(-1, 1)
 
-Z = clf_visual.predict(np.c_[xx.ravel(), yy.ravel()])
-Z = Z.reshape(xx.shape)
+# Prediksi probabilitas menggunakan model
+probs = svm_diabetes.predict_proba(x_plot)[:, 1]
 
-# Plot grafik
-plt.figure(figsize=(8, 6))
-plt.contourf(xx, yy, Z, cmap=plt.cm.coolwarm, alpha=0.3)
-plt.scatter(X_visual_scaled[:, 0], X_visual_scaled[:, 1], c=y_visual, cmap=plt.cm.coolwarm, s=100, edgecolors='k')
-plt.title("SVM Klasifikasi Diabetes (Glukosa & BMI)")
-plt.xlabel("Glukosa (distandardisasi)")
-plt.ylabel("BMI (distandardisasi)")
+plt.figure(figsize=(8, 5))
+plt.scatter(X_visual_scaled, y_visual, c=y_visual, cmap=plt.cm.coolwarm, s=100, edgecolors='k')
+plt.plot(x_plot, probs, 'b-', label='Probabilitas Diabetes')
+plt.axhline(0.5, color='gray', linestyle='--', label='Threshold 0.5')
+plt.title('SVM Diabetes Classification (Glucose only)')
+plt.xlabel('Glukosa (standarisasi)')
+plt.ylabel('Probabilitas Diabetes')
+plt.legend()
 plt.grid(True)
 plt.tight_layout()
 plt.savefig('plot_classification_diabetes.png')

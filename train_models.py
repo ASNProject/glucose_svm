@@ -5,12 +5,14 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 import joblib
+import pandas as pd
 
 # =======================
 # MULTIPLIER FACTOR
 # =======================
-adc = np.array([220.4, 344.9, 238.7, 310.2, 290.5, 265.3])
-glucose = np.array([97, 174, 86, 145, 132, 122])
+df_factor = pd.read_excel('data.xlsx', sheet_name='Faktor')
+adc = df_factor['adc'].values
+glucose = df_factor['glucose'].values
 factor = glucose / adc
 x_factor = np.column_stack((adc, glucose))
 y_factor = factor
@@ -42,21 +44,10 @@ plt.show()
 # ================================
 # DIABETES MODEL
 # ================================
-# Dummy data
-x_diabetes = np.array([
-    [25, 100, 22.0],
-    [45, 150, 28.5],
-    [33, 120, 26.1],
-    [50, 180, 31.2],
-    [29, 90, 20.5],
-    [60, 200, 35.3],
-    [41, 135, 24.0],
-    [48, 170, 30.1],
-    [38, 110, 23.3],
-    [55, 160, 29.7]
-])
+df_diabetes = pd.read_excel('data.xlsx', sheet_name='Diabetes')
+x_diabetes = df_diabetes[['glucose']].values
 # Label: 0 = tidak diabetes, 1 = diabetes
-y_diabetes = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 1])
+y_diabetes = df_diabetes['label'].values
 
 # scaling
 scaler_diabetes = StandardScaler()
