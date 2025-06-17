@@ -38,6 +38,7 @@ class SerialReader(threading.Thread):
         self.port = port
         self.update_callback = update_callback
         self.running = False
+        self.ser = None
 
     def run(self):
         try:
@@ -51,6 +52,13 @@ class SerialReader(threading.Thread):
                         parts = dict(item.split("=") for item in line.split(","))
                         adc = int(parts["adc"].strip())
                         glucose = int(parts["glucose"].strip())
+
+                        factor, result_pred, result, prob = classify_data(adc, glucose)
+
+                        if self.ser and self.ser.is_open and result_pred is not None:
+                            result_str = f"{result_pred:.2f}\n"
+                            self.ser.write(result_str.encode('utf-8'))
+
                         self.update_callback(adc, glucose)
                 time.sleep(0.1)
         except Exception as e:
@@ -58,7 +66,8 @@ class SerialReader(threading.Thread):
 
     def stop(self):
         self.running = False
-
+        if self.ser and self.ser.is_open:
+            self.ser.close()
 
 # UI App
 class DiabetesApp:
