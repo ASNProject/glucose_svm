@@ -85,6 +85,9 @@ class DiabetesApp:
         self.glucose_label = tk.Label(root, text="Glucose: -")
         self.glucose_label.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky='w')
 
+        self.multiplied_label = tk.Label(root, text="Hasil Perkalian: -")
+        self.multiplied_label.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky='w')
+
         self.result_label = tk.Label(root, text="Hasil: -", font=('Arial', 14, 'bold'))
         self.result_label.grid(row=3, column=0, columnspan=4, padx=5, pady=10)
 
@@ -96,6 +99,12 @@ class DiabetesApp:
         self.adc_label.config(text=f"ADC: {adc}")
         self.glucose_label.config(text=f"Glucose: {glucose}")
         factor, result_pred, result, prob = classify_data(adc, glucose)
+
+        if result_pred is not None:
+            self.multiplied_label.config(text=f"Hasil Perkalian: {result_pred:.2f}")
+        else:
+            self.multiplied_label.config(text=f"Hasil Perkalian: -")
+
         self.result_label.config(text=f"Hasil: {result} ({prob:.2%})",
                                  fg="green" if result == "Tidak Diabetes" else "red")
 
